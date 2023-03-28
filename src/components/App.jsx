@@ -1,65 +1,47 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { ContactForm } from './ContactForm/ContactForm';
 import { ContactList } from './ContactList/ContactList';
 import { Filter } from './Filter/Filter';
 
-export class App extends Component {
-  state = {
-    contacts: [],
-    filter: '',
+export const App = () => {
+  const [contacts, setContacts] = useState([]);
+  const [filterItem, setFilter] = useState('');
+
+  useEffect(() => {
+    const localContacts = localStorage.getItem('contacts');
+    if (localContacts) setContacts(JSON.parse(localContacts));
+  }, []);
+
+  useEffect(() => {
+    contacts.length !== 0
+      ? localStorage.setItem('contacts', JSON.stringify(contacts))
+      : localStorage.removeItem('contacts');
+  }, [contacts]);
+
+  const createUser = user => {
+   setContacts([...contacts, user]);
   };
 
-  componentDidMount() {
-    if (localStorage.getItem('contacts')) {
-      this.setState({ contacts: JSON.parse(localStorage.getItem('contacts')) });
-    }
-   
-  }
-
-  componentDidUpdate(_, prevState) {
-    const contacts = this.state.contacts;
-    if (this.state.contacts !== prevState.contacts) 
-      localStorage.setItem('contacts', JSON.stringify(contacts));
-     }
-
-  createUser = user => {
-    this.setState(prevState => {
-      return { contacts: [...prevState.contacts, user] };
-    });
+  const filter = value => {
+    setFilter(value);
   };
 
-  filter = value => {
-    this.setState({
-      filter: value,
-    });
-  };
-
-  getVisibleFilter = () => {
-    return this.state.contacts.filter(contact =>
-      contact.name.toLowerCase().includes(this.state.filter.toLowerCase())
+  const getVisibleFilter = () => {
+    return contacts.filter(contact =>
+      contact.name.toLowerCase().includes(filterItem.toLowerCase())
     );
   };
 
-  deleteContact = id => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== id),
-    }));
+  const deleteContact = id => {
+    setContacts(contacts.filter(contact => contact.id !== id));
   };
 
-  render() {
-    return (
-      <div>
-        <h1>Phonebook</h1>
-        <ContactForm
-          contacts={this.state.contacts}
-          createUser={this.createUser}
-        />
-        <Filter filter={this.filter} />
-        <ContactList
-          deleteItem={this.deleteContact}
-          contacts={this.getVisibleFilter()}
-        />
-      </div>
-    );
-  }
-}
+  return (
+    <div>
+      <h1>Phonebook</h1>
+      <ContactForm contacts={contacts} createUser={createUser} />
+      <Filter filter={filter} />
+      <ContactList deleteItem={deleteContact} contacts={getVisibleFilter()} />
+    </div>
+  );
+};
